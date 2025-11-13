@@ -1,0 +1,16 @@
+version: "2"
+authtoken: 35HQwHDXRzIN6lvziFylNhdVD5Z_772Ptjkf4EsJN9Cs4HuBP
+region: us
+console_ui: true
+log_level: info
+log_format: json
+
+tunnels:
+  mri-tumor-detector:
+    proto: http
+    addr: 80
+    inspect: true
+    bind_tls: true
+    schemes:
+      - https
+      - http

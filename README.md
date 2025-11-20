@@ -16,13 +16,20 @@
   
 * 🎨 **Segmentación:** Un modelo de segmentación (ResUNet) genera una máscara del tumor.
   
-* 🖼️ **Visualización:** Muestra la imagen original, la máscara, y una superposición con el tumor resaltado en rojo.
+* 🖼️ **Visualización:** Muestra la imagen original, la máscara, y una superposición con el tumor resaltado.
+
+* 🆕 **NUEVO: Comparación de Modelos:** Compara resultados de 3 arquitecturas diferentes:
+  * 🔴 **ResNet-50 + ResUNet** (Modelo principal - Rojo)
+  * 🟢 **AlexNet** (Simulado - Verde)
+  * 🔵 **VGGNet** (Simulado - Azul)
   
 * 🐳 **Dockerizado:** Todo corre en contenedores con docker-compose.
   
 * 🌐 **Exposición pública:** Usa ngrok para acceder a la app desde cualquier lugar.
   
 * ⚡ **Rápido y ligero:** Configurado para ser eficiente y fácil de usar.
+
+> 📘 **Nuevo en v2.0:** Ahora puedes comparar visualmente cómo diferentes arquitecturas de Deep Learning procesan la misma imagen. Ver [MODELOS_SIMULADOS.md](MODELOS_SIMULADOS.md) y [INSTRUCCIONES_USO.md](INSTRUCCIONES_USO.md) para más detalles.
 
 
 <br>

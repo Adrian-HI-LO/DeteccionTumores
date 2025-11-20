@@ -96,8 +96,10 @@ async def predict(file: UploadFile = File(...)):
         # Read image
         image = read_image_file(file)
         
-        # Make prediction
-        has_tumor, tumor_probability, original_image, mask_image, overlay_image = predict_tumor(
+        # Make prediction (ahora incluye modelos simulados)
+        (has_tumor, tumor_probability, original_image, mask_image, overlay_image,
+         alexnet_probability, alexnet_mask, alexnet_overlay,
+         vggnet_probability, vggnet_mask, vggnet_overlay) = predict_tumor(
             image, classification_model, segmentation_model
         )
         
@@ -106,9 +108,42 @@ async def predict(file: UploadFile = File(...)):
         mask_base64 = encode_image_to_base64(mask_image)
         overlay_base64 = encode_image_to_base64(overlay_image)
         
+        # Convert AlexNet images to base64
+        alexnet_mask_base64 = encode_image_to_base64(alexnet_mask)
+        alexnet_overlay_base64 = encode_image_to_base64(alexnet_overlay)
+        
+        # Convert VGGNet images to base64
+        vggnet_mask_base64 = encode_image_to_base64(vggnet_mask)
+        vggnet_overlay_base64 = encode_image_to_base64(vggnet_overlay)
+        
         # Create response
         response = {
             "has_tumor": bool(has_tumor),
+            # ResNet-50 + ResUNet (modelo principal)
+            "resnet": {
+                "model_name": "ResNet-50 + ResUNet",
+                "probability": float(tumor_probability),
+                "original_image": original_base64,
+                "mask_image": mask_base64,
+                "overlay_image": overlay_base64
+            },
+            # AlexNet simulado
+            "alexnet": {
+                "model_name": "AlexNet (Simulado)",
+                "probability": float(alexnet_probability),
+                "original_image": original_base64,
+                "mask_image": alexnet_mask_base64,
+                "overlay_image": alexnet_overlay_base64
+            },
+            # VGGNet simulado
+            "vggnet": {
+                "model_name": "VGGNet (Simulado)",
+                "probability": float(vggnet_probability),
+                "original_image": original_base64,
+                "mask_image": vggnet_mask_base64,
+                "overlay_image": vggnet_overlay_base64
+            },
+            # Mantener compatibilidad con versión anterior
             "tumor_probability": float(tumor_probability),
             "original_image": original_base64,
             "mask_image": mask_base64,

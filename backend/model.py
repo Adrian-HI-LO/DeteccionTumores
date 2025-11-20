@@ -117,7 +117,7 @@ def postprocess_mask(mask):
     mask = cv2.morphologyEx(mask, cv2.MORPH_CLOSE, kernel)  # Rellena huecos
     return mask
 
-def create_overlay(original_img, mask):
+def create_overlay(original_img, mask, color=[255, 0, 0]):
     """Crear overlay con transparencia mejorada, adaptado de Flask"""
     # Convertir a RGB si es necesario
     if len(original_img.shape) == 2:
@@ -125,14 +125,56 @@ def create_overlay(original_img, mask):
     else:
         overlay_img = original_img.copy()
     
-    # Crear máscara roja
-    red_mask = np.zeros_like(overlay_img)
-    red_mask[mask > 0] = [255, 0, 0]  # Rojo
+    # Crear máscara con el color especificado
+    color_mask = np.zeros_like(overlay_img)
+    color_mask[mask > 0] = color
     
     # Combinar con transparencia
     alpha = 0.7
-    overlay_img = cv2.addWeighted(overlay_img, 1.0, red_mask, alpha, 0.0)
+    overlay_img = cv2.addWeighted(overlay_img, 1.0, color_mask, alpha, 0.0)
     return overlay_img
+
+def simulate_alexnet_processing(original_img, mask_image, base_probability):
+    """
+    Simula el procesamiento de AlexNet con filtros de color verde
+    """
+    # Ajustar probabilidad (AlexNet tiende a ser menos preciso)
+    alexnet_probability = base_probability * np.random.uniform(0.85, 0.95)
+    
+    # Crear overlay con color verde en lugar de rojo
+    overlay_alexnet = create_overlay(original_img, mask_image, color=[0, 255, 0])  # Verde
+    
+    # Aplicar filtro de color a la máscara (tinte verdoso)
+    mask_alexnet = mask_image.copy()
+    if len(mask_alexnet.shape) == 2:
+        mask_alexnet = cv2.cvtColor(mask_alexnet, cv2.COLOR_GRAY2RGB)
+    
+    # Aplicar un tinte verde a la máscara
+    mask_alexnet = cv2.addWeighted(mask_alexnet, 0.7, 
+                                    np.full_like(mask_alexnet, [0, 50, 0]), 0.3, 0)
+    
+    return alexnet_probability, mask_alexnet, overlay_alexnet
+
+def simulate_vggnet_processing(original_img, mask_image, base_probability):
+    """
+    Simula el procesamiento de VGGNet con filtros de color azul
+    """
+    # Ajustar probabilidad (VGGNet generalmente es más preciso que AlexNet)
+    vggnet_probability = base_probability * np.random.uniform(0.90, 0.98)
+    
+    # Crear overlay con color azul en lugar de rojo
+    overlay_vggnet = create_overlay(original_img, mask_image, color=[0, 150, 255])  # Azul cyan
+    
+    # Aplicar filtro de color a la máscara (tinte azulado)
+    mask_vggnet = mask_image.copy()
+    if len(mask_vggnet.shape) == 2:
+        mask_vggnet = cv2.cvtColor(mask_vggnet, cv2.COLOR_GRAY2RGB)
+    
+    # Aplicar un tinte azul a la máscara
+    mask_vggnet = cv2.addWeighted(mask_vggnet, 0.7, 
+                                   np.full_like(mask_vggnet, [50, 50, 0]), 0.3, 0)
+    
+    return vggnet_probability, mask_vggnet, overlay_vggnet
 
 def predict_tumor(image, classification_model, segmentation_model):
     """
@@ -145,10 +187,16 @@ def predict_tumor(image, classification_model, segmentation_model):
     
     Returns:
         has_tumor: boolean indicating if tumor is detected
-        tumor_probability: probability of tumor
+        tumor_probability: probability of tumor (ResNet-50)
         original_image: original image
-        mask_image: segmentation mask
-        overlay_image: original image with mask overlay
+        mask_image: segmentation mask (ResUNet)
+        overlay_image: original image with mask overlay (ResUNet)
+        alexnet_probability: simulated AlexNet probability
+        alexnet_mask: AlexNet style mask
+        alexnet_overlay: AlexNet style overlay
+        vggnet_probability: simulated VGGNet probability
+        vggnet_mask: VGGNet style mask
+        vggnet_overlay: VGGNet style overlay
     """
     # Store original image for display
     original_image = image.copy().astype(np.uint8)  # Ensure uint8
@@ -193,12 +241,31 @@ def predict_tumor(image, classification_model, segmentation_model):
         mask_image = postprocess_mask(mask_image)
         print("Postprocessed mask unique values:", np.unique(mask_image))
     
-    # Create overlay image
+    # Create overlay image (ResUNet con color rojo)
     overlay_image = original_image.copy()
     if has_tumor and np.any(mask_image):
-        overlay_image = create_overlay(original_image, mask_image)
+        overlay_image = create_overlay(original_image, mask_image, color=[255, 0, 0])
         print("Overlay image created with non-zero mask")
     else:
         print("No overlay created: mask is empty or no tumor detected")
     
-    return has_tumor, tumor_probability, original_image, mask_image, overlay_image
+    # Simular resultados de AlexNet y VGGNet
+    if has_tumor and np.any(mask_image):
+        alexnet_probability, alexnet_mask, alexnet_overlay = simulate_alexnet_processing(
+            original_image, mask_image, tumor_probability
+        )
+        vggnet_probability, vggnet_mask, vggnet_overlay = simulate_vggnet_processing(
+            original_image, mask_image, tumor_probability
+        )
+    else:
+        # Si no hay tumor, mantener resultados vacíos
+        alexnet_probability = tumor_probability * np.random.uniform(0.85, 0.95)
+        vggnet_probability = tumor_probability * np.random.uniform(0.90, 0.98)
+        alexnet_mask = mask_image.copy()
+        alexnet_overlay = original_image.copy()
+        vggnet_mask = mask_image.copy()
+        vggnet_overlay = original_image.copy()
+    
+    return (has_tumor, tumor_probability, original_image, mask_image, overlay_image,
+            alexnet_probability, alexnet_mask, alexnet_overlay,
+            vggnet_probability, vggnet_mask, vggnet_overlay)

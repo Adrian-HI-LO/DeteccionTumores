@@ -1,12 +1,10 @@
-version: '3.8'
-
 services:
   frontend:
     build:
       context: ./frontend
       dockerfile: Dockerfile
     ports:
-      - "80:80"
+      - "3000:80"
     depends_on:
       - backend
     networks:
@@ -34,7 +32,7 @@ services:
     image: ngrok/ngrok:latest
     env_file:
       - .env
-    command: ["http", "--url=poorly-free-insect.ngrok-free.app", "frontend:80"]
+    command: ["http", "--url=poorly-free-insect.ngrok-free.app", "frontend:3000"]
     depends_on:
       - frontend
     networks:
